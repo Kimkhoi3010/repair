@@ -12,7 +12,7 @@ class RepairPurchaseReturnWiz(models.TransientModel):
 
     @api.model
     def default_get(self, fields):
-        vals = super(RepairPurchaseReturnWiz, self).default_get(fields)
+        vals = super().default_get(fields)
         repair_ids = self.env.context["active_ids"] or []
         active_model = self.env.context["active_model"]
 

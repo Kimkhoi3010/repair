@@ -7,7 +7,7 @@ from odoo.addons.account.tests.common import AccountTestInvoicingCommon
 class TestRepairPurchaseReturnOrder(AccountTestInvoicingCommon):
     @classmethod
     def setUpClass(cls):
-        super(TestRepairPurchaseReturnOrder, cls).setUpClass()
+        super().setUpClass()
         cls.product = cls.env["product.product"].create(
             {
                 "name": "Test product",
@@ -90,7 +90,8 @@ class TestRepairPurchaseReturnOrder(AccountTestInvoicingCommon):
         pro = self.repair._create_purchase_return(self.vendor)
         pro.action_view_repair_orders()
 
-        # Check that purchase return order is caching the two lines and using the product cost
+        # Check that purchase return order is caching the two lines
+        # and using the product cost
         self.assertEqual(pro.order_line[0].price_unit, 10)
 
         self.assertEqual(pro.order_line[1].price_unit, 30)

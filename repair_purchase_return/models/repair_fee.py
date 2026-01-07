@@ -19,7 +19,9 @@ class RepairFee(models.Model):
     def _execute_purchase_return_line_onchange(self, vals):
         cls = self.env["purchase.return.order.line"]
         onchanges_dict = {
-            "onchange_product_id": self._get_purchase_return_line_onchange_product_fields()
+            "onchange_product_id": (
+                self._get_purchase_return_line_onchange_product_fields()
+            )
         }
         for onchange_method, changed_fields in onchanges_dict.items():
             if any(f not in vals for f in changed_fields):
