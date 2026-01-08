@@ -1,11 +1,11 @@
 # Copyright (C) 2021 ForgeFlow S.L.
 # License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl.html)
 
-from odoo import api, fields, models
+from odoo import Command, api, fields, models
 
 
-class RepairFee(models.Model):
-    _inherit = "repair.fee"
+class StockMove(models.Model):
+    _inherit = "stock.move"
 
     purchase_return_line_ids = fields.Many2many(
         comodel_name="purchase.return.order.line", copy=False
@@ -39,7 +39,7 @@ class RepairFee(models.Model):
             "product_uom": self.product_uom.id,
             "price_unit": 0.0,
             "product_qty": self.product_uom_qty,
-            "repair_fee_ids": [(4, self.id)],
+            "move_ids": [(Command.link(self.id))],
             "date_planned": fields.Datetime.now(),
             "refund_only": True,
         }

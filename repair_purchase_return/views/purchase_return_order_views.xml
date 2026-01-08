@@ -11,14 +11,13 @@
                     name="action_view_repair_orders"
                     class="oe_stat_button"
                     icon="fa-pencil-square-o"
-                    attrs="{'invisible':[('repair_order_count', '=', 0)]}"
+                    invisible="repair_order_count == 0"
                 >
                     <field
                         name="repair_order_count"
                         widget="statinfo"
                         string="Repair Orders"
                     />
-                    <field name='repair_order_ids' invisible="1" />
                 </button>
             </div>
         </field>

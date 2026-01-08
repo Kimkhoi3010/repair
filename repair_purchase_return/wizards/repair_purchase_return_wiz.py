@@ -25,7 +25,7 @@ class RepairPurchaseReturnWiz(models.TransientModel):
         for repair in repairs:
             vendors |= (
                 repair.product_id.mapped("seller_ids")
-                .filtered(lambda s: s.company_id == repair.company_id)
+                .filtered(lambda s, repair=repair: s.company_id == repair.company_id)
                 .partner_id
             )
         if len(vendors) >= 1:

@@ -9,7 +9,6 @@ class PurchaseReturnOrder(models.Model):
 
     repair_order_count = fields.Integer(
         compute="_compute_repair_orders",
-        string="Repair Orders Count",
     )
     repair_order_ids = fields.Many2many(
         comodel_name="repair.order",
@@ -17,13 +16,11 @@ class PurchaseReturnOrder(models.Model):
     )
 
     @api.depends(
-        "order_line.repair_line_ids.repair_id",
-        "order_line.repair_fee_ids.repair_id",
+        "order_line.move_ids.repair_id",
     )
     def _compute_repair_orders(self):
         for rec in self:
-            repair_orders = rec.order_line.mapped("repair_line_ids.repair_id")
-            repair_orders |= rec.order_line.mapped("repair_fee_ids.repair_id")
+            repair_orders = rec.order_line.mapped("move_ids.repair_id")
             rec.repair_order_ids = repair_orders
             rec.repair_order_count = len(repair_orders)
 

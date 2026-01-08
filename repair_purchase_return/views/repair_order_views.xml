@@ -19,17 +19,16 @@
                     name="action_view_purchase_returns"
                     class="oe_stat_button"
                     icon="fa-pencil-square-o"
-                    attrs="{'invisible':[('purchase_return_count', '=', 0)]}"
+                    invisible="purchase_return_count == 0"
                 >
                     <field
                         name="purchase_return_count"
                         widget="statinfo"
                         string="Purchase Returns"
                     />
-                    <field name='purchase_return_ids' invisible="1" />
                 </button>
             </div>
-            <field name="quotation_notes" position="after">
+            <field name="internal_notes" position="after">
                 <field
                     name="purchase_return_notes"
                     placeholder="Add purchase return notes."

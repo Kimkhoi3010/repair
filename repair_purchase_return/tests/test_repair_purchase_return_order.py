@@ -34,41 +34,21 @@ class TestRepairPurchaseReturnOrder(AccountTestInvoicingCommon):
             {
                 "product_id": cls.product.id,
                 "partner_id": cls.partner.id,
-                "partner_invoice_id": cls.partner.id,
                 "product_uom": cls.product.uom_id.id,
                 "location_id": cls.location.id,
-                "invoice_method": "none",
             }
         )
-        domain_location = [("usage", "=", "production")]
-        stock_location_id = cls.env["stock.location"].search(domain_location, limit=1)
-        cls.repair_line = cls.env["repair.line"].create(
+
+        cls.repair_move = cls.env["stock.move"].create(
             {
                 "repair_id": cls.repair.id,
-                "type": "add",
                 "product_id": cls.product.id,
                 "product_uom": cls.product.uom_id.id,
-                "name": "Test line",
-                "location_id": cls.repair.location_id.id,
-                "location_dest_id": stock_location_id.id,
-                "product_uom_qty": 1,
-                "price_unit": cls.product.list_price,
+                "product_uom_qty": 1.0,
+                "company_id": cls.env.company.id,
+                "repair_line_type": "add",
             }
         )
-
-        cls.fees_lines = cls.env["repair.fee"].create(
-            {
-                "repair_id": cls.repair.id,
-                "product_id": cls.service.id,
-                "product_uom": cls.service.uom_id.id,
-                "name": "Test Fee",
-                "product_uom_qty": 1,
-                "price_unit": cls.service.list_price,
-            }
-        )
-
-        cls.repair["operations"] = cls.repair_line
-        cls.repair["fees_lines"] = cls.fees_lines
 
         cls.journal = cls.env["account.journal"].create(
             {
@@ -90,8 +70,7 @@ class TestRepairPurchaseReturnOrder(AccountTestInvoicingCommon):
         pro = self.repair._create_purchase_return(self.vendor)
         pro.action_view_repair_orders()
 
-        # Check that purchase return order is caching the two lines
+        # Check that purchase return order is caching the line
         # and using the product cost
+        self.assertEqual(len(pro.order_line), 1)
         self.assertEqual(pro.order_line[0].price_unit, 10)
-
-        self.assertEqual(pro.order_line[1].price_unit, 30)

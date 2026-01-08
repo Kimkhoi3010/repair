@@ -15,7 +15,6 @@ class RepairOrder(models.Model):
     )
     purchase_return_count = fields.Integer(
         compute="_compute_purchase_returns",
-        string="Return Purchase Count",
         copy=False,
         default=0,
         store=True,
@@ -23,15 +22,12 @@ class RepairOrder(models.Model):
     purchase_return_notes = fields.Text("Return Purchase Notes")
 
     @api.depends(
-        "operations.purchase_return_line_ids",
-        "operations.purchase_return_line_ids.order_id",
-        "fees_lines.purchase_return_line_ids",
-        "fees_lines.purchase_return_line_ids.order_id",
+        "move_ids.purchase_return_line_ids",
+        "move_ids.purchase_return_line_ids.order_id",
     )
     def _compute_purchase_returns(self):
         for order in self:
-            pros = order.mapped("operations.purchase_return_line_ids.order_id")
-            pros |= order.mapped("fees_lines.purchase_return_line_ids.order_id")
+            pros = order.mapped("move_ids.purchase_return_line_ids.order_id")
             order.purchase_return_ids = pros
             order.purchase_return_count = len(pros)
 
@@ -51,11 +47,7 @@ class RepairOrder(models.Model):
 
     @api.model
     def _select_operations_to_return(self, operations):
-        return operations.filtered(lambda o: o.type == "add")
-
-    @api.model
-    def _select_fees_to_return(self, fees):
-        return fees
+        return operations.filtered(lambda m: m.repair_line_type == "add")
 
     def _create_purchase_return(self, vendor):
         pro_line_obj = self.env["purchase.return.order.line"]
@@ -66,11 +58,8 @@ class RepairOrder(models.Model):
             .create(pr_vals)
             .with_user(self.env.uid)
         )
-        for operation in self._select_operations_to_return(self.operations):
-            pr_line_vals = operation._prepare_purchase_order_line_vals(pro)
-            pro_line_obj.create(pr_line_vals)
-        for fee in self._select_fees_to_return(self.fees_lines):
-            pr_line_vals = fee._prepare_purchase_order_line_vals(pro)
+        for move in self._select_operations_to_return(self.move_ids):
+            pr_line_vals = move._prepare_purchase_order_line_vals(pro)
             pro_line_obj.create(pr_line_vals)
         return pro
 
