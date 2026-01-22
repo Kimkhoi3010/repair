@@ -6,7 +6,7 @@ from odoo.tests import common, tagged
 class TestMrpRepairReinvoice(common.TransactionCase):
     @classmethod
     def setUpClass(cls):
-        super(TestMrpRepairReinvoice, cls).setUpClass()
+        super().setUpClass()
         cls.product = cls.env["product.product"].create(
             {
                 "name": "Test product",
