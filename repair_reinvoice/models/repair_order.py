@@ -1,7 +1,7 @@
 # Copyright (C) 2021 ForgeFlow S.L.
 # License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl.html)
 
-from odoo import _, api, fields, models
+from odoo import api, fields, models
 
 
 class RepairOrder(models.Model):
@@ -13,51 +13,59 @@ class RepairOrder(models.Model):
         copy=False,
         readonly=True,
         tracking=True,
-        domain=[("move_type", "in", ("out_invoice", "out_refund"))],
+        domain=[("move_type", "=", "out_invoice")],
+        compute="_compute_invoice_ids",
     )
 
-    invoiced = fields.Boolean(compute="_compute_invoiced", store=True)
+    invoiced = fields.Boolean(compute="_compute_invoiced", store=False)
 
     invoice_count = fields.Integer(
         compute="_compute_invoice_count",
         string="Bill Count",
         copy=False,
         default=0,
-        store=True,
+        store=False,
     )
 
-    @api.depends("invoice_id.payment_state", "invoice_id")
+    def _compute_invoice_ids(self):
+        Move = self.env["account.move"]
+        has_repair_ids = "repair_ids" in Move._fields
+        for repair in self:
+            moves = Move.browse()
+            if repair.id and has_repair_ids:
+                moves = Move.search(
+                    [
+                        ("repair_ids", "in", repair.id),
+                        ("move_type", "=", "out_invoice"),
+                    ]
+                )
+            elif repair.sale_order_id:
+                moves = repair.sale_order_id.invoice_ids.filtered(
+                    lambda m: m.move_type == "out_invoice"
+                )
+            repair.invoice_ids = moves
+
     def _compute_invoiced(self):
         for repair in self:
-            if repair.invoice_id.payment_state == "reversed":
+            has_reversed = repair.invoice_ids.filtered(
+                lambda move: getattr(move, "payment_state", None) == "reversed"
+            )
+            if has_reversed:
                 repair.invoiced = False
-                repair.invoice_id = False
-                repair.mapped("operations").filtered(lambda op: op.type == "add").write(
-                    {"invoiced": False}
-                )
-                repair.mapped("fees_lines").write({"invoiced": False})
-                repair.state = "2binvoiced"
-            elif repair.invoice_id:
-                repair.invoiced = True
             else:
-                repair.invoiced = False
+                repair.invoiced = bool(
+                    repair.invoice_ids.filtered(lambda move: move.state != "cancel")
+                )
 
     @api.depends("invoice_ids")
     def _compute_invoice_count(self):
         for repair in self:
             repair.invoice_count = len(repair.invoice_ids)
 
-    def _create_invoices(self, group=False):
-        repair_dict = super()._create_invoices(group)
-        for repair_id in repair_dict:
-            repair = self.env["repair.order"].browse(repair_id)
-            repair.invoice_ids += repair.invoice_id
-        return repair_dict
-
     def action_created_invoices(self):
         self.ensure_one()
         action = {
-            "name": _("Invoices created"),
+            "name": self.env._("Invoices created"),
             "type": "ir.actions.act_window",
             "res_model": "account.move",
         }
@@ -74,7 +82,7 @@ class RepairOrder(models.Model):
         else:
             action.update(
                 {
-                    "view_mode": "tree,form",
+                    "view_mode": "list,form",
                     "res_model": "account.move",
                     "domain": [("id", "in", self.invoice_ids.ids)],
                 }
