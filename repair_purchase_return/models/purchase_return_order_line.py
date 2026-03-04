@@ -1,0 +1,10 @@
+# Copyright (C) 2021 ForgeFlow S.L.
+# License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl.html)
+
+from odoo import fields, models
+
+
+class PurchaseReturnOrderLine(models.Model):
+    _inherit = "purchase.return.order.line"
+
+    move_ids = fields.Many2many(comodel_name="stock.move", copy=False)
